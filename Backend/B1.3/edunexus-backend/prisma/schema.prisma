@@ -1,0 +1,356 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// EduNexus — Prisma Schema
+// Milestone 1.1 — Core Foundation (base schema; domain models added in 1.2+)
+// ─────────────────────────────────────────────────────────────────────────────
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearch", "metrics"]
+}
+
+datasource db {
+  provider          = "postgresql"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+}
+
+// ─── Shared Enums (domain enums added in later milestones) ───────────────────
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  READ
+  LOGIN
+  LOGOUT
+  EXPORT
+  IMPORT
+}
+
+// ─── Audit Log ───────────────────────────────────────────────────────────────
+// Global audit trail — all domain modules write here.
+// Note: actorId, entity/entityId, and payload double as the userId/action-target
+// and metadata fields the 1.3 audit-log module needs — one table, no duplicate model.
+
+model AuditLog {
+  id         String      @id @default(cuid())
+  action     AuditAction
+  entity     String
+  entityId   String?
+  actorId    String?
+  actorType  String?     @default("system")
+  payload    Json?
+  ipAddress  String?
+  userAgent  String?
+  statusCode Int?
+  schoolId   String?
+  createdAt  DateTime    @default(now())
+
+  @@index([entity, entityId])
+  @@index([actorId])
+  @@index([schoolId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// ─── Health Check (used by health-check module in 1.3) ───────────────────────
+
+model HealthPing {
+  id        Int      @id @default(autoincrement())
+  checkedAt DateTime @default(now())
+
+  @@map("health_pings")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Milestone 1.2 — Identity · Auth · Tenancy
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  PENDING_VERIFICATION
+}
+
+// ─── School (Tenant) ─────────────────────────────────────────────────────────
+
+model School {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  domain      String?   @unique
+  logoUrl     String?
+  isActive    Boolean   @default(true)
+  metadata    Json?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  users       User[]
+  roles       Role[]
+  systemSettings SystemSetting[]
+  files          StoredFile[]
+
+  @@index([slug])
+  @@index([domain])
+  @@map("schools")
+}
+
+// ─── Role ─────────────────────────────────────────────────────────────────────
+
+model Role {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  isSystem    Boolean   @default(false)
+  schoolId    String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  school      School?          @relation(fields: [schoolId], references: [id], onDelete: SetNull)
+  users       UserRole[]
+  permissions RolePermission[]
+
+  @@unique([name, schoolId])
+  @@index([schoolId])
+  @@map("roles")
+}
+
+// ─── Permission ───────────────────────────────────────────────────────────────
+
+model Permission {
+  id          String    @id @default(cuid())
+  action      String
+  subject     String
+  description String?
+  createdAt   DateTime  @default(now())
+
+  roles       RolePermission[]
+
+  @@unique([action, subject])
+  @@index([subject])
+  @@map("permissions")
+}
+
+// ─── RolePermission (join) ────────────────────────────────────────────────────
+
+model RolePermission {
+  id           String   @id @default(cuid())
+  roleId       String
+  permissionId String
+  createdAt    DateTime @default(now())
+
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@index([roleId])
+  @@index([permissionId])
+  @@map("role_permissions")
+}
+
+// ─── User ─────────────────────────────────────────────────────────────────────
+
+model User {
+  id           String     @id @default(cuid())
+  email        String     @unique
+  passwordHash String
+  firstName    String
+  lastName     String
+  avatarUrl    String?
+  status       UserStatus @default(PENDING_VERIFICATION)
+  schoolId     String?
+  lastLoginAt  DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  deletedAt    DateTime?
+
+  school       School?      @relation(fields: [schoolId], references: [id], onDelete: SetNull)
+  roles        UserRole[]
+  refreshTokens RefreshToken[]
+
+  @@index([email])
+  @@index([schoolId])
+  @@map("users")
+}
+
+// ─── UserRole (join) ─────────────────────────────────────────────────────────
+
+model UserRole {
+  id        String   @id @default(cuid())
+  userId    String
+  roleId    String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+  @@index([userId])
+  @@index([roleId])
+  @@map("user_roles")
+}
+
+// ─── RefreshToken ─────────────────────────────────────────────────────────────
+
+model RefreshToken {
+  id          String    @id @default(cuid())
+  token       String    @unique
+  userId      String
+  expiresAt   DateTime
+  revokedAt   DateTime?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime  @default(now())
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@map("refresh_tokens")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Milestone 1.3 — Security & System Infrastructure Core
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum SettingScope {
+  GLOBAL
+  SCHOOL
+}
+
+enum SettingValueType {
+  STRING
+  NUMBER
+  BOOLEAN
+  JSON
+}
+
+// ─── SystemSetting ────────────────────────────────────────────────────────────
+// Key-value config store. GLOBAL rows have schoolId = null and are the
+// platform default; SCHOOL rows override a GLOBAL key for one tenant.
+
+model SystemSetting {
+  id        String           @id @default(cuid())
+  key       String
+  value     String
+  valueType SettingValueType @default(STRING)
+  scope     SettingScope     @default(GLOBAL)
+  schoolId  String?
+  isSecret  Boolean          @default(false)
+  updatedBy String?
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  school    School?          @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+
+  @@unique([key, schoolId])
+  @@index([key])
+  @@index([schoolId])
+  @@map("system_settings")
+}
+
+enum FileStatus {
+  PENDING
+  UPLOADED
+  FAILED
+  DELETED
+}
+
+enum FileVisibility {
+  PRIVATE
+  SCHOOL
+  PUBLIC
+}
+
+// ─── StoredFile ───────────────────────────────────────────────────────────────
+// Metadata for files stored in S3-compatible object storage. The bucket key
+// is namespaced by schoolId so tenants cannot address each other's objects.
+
+model StoredFile {
+  id           String         @id @default(cuid())
+  bucket       String
+  key          String         @unique
+  originalName String
+  mimeType     String
+  sizeBytes    Int
+  checksum     String?
+  status       FileStatus     @default(PENDING)
+  visibility   FileVisibility @default(PRIVATE)
+  schoolId     String?
+  uploadedById String?
+  metadata     Json?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  deletedAt    DateTime?
+
+  school       School?        @relation(fields: [schoolId], references: [id], onDelete: SetNull)
+
+  @@index([schoolId])
+  @@index([uploadedById])
+  @@index([status])
+  @@map("files")
+}
+
+enum EventStatus {
+  PENDING
+  PUBLISHED
+  FAILED
+}
+
+// ─── SystemEvent ──────────────────────────────────────────────────────────────
+// Durable record of domain events emitted on the internal event bus —
+// gives the in-process EventEmitter an audit trail and a replay source
+// for the future microservices split.
+
+model SystemEvent {
+  id          String      @id @default(cuid())
+  name        String
+  payload     Json
+  schoolId    String?
+  status      EventStatus @default(PENDING)
+  error       String?
+  publishedAt DateTime?
+  createdAt   DateTime    @default(now())
+
+  @@index([name])
+  @@index([schoolId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("system_events")
+}
+
+enum JobStatus {
+  WAITING
+  ACTIVE
+  COMPLETED
+  FAILED
+  DELAYED
+}
+
+// ─── JobQueue ─────────────────────────────────────────────────────────────────
+// Mirrors Bull job lifecycle in Postgres for querying/reporting; Bull/Redis
+// remains the source of truth for actual scheduling and retries.
+
+model JobQueue {
+  id          String    @id @default(cuid())
+  queueName   String
+  jobName     String
+  bullJobId   String?
+  data        Json
+  status      JobStatus @default(WAITING)
+  attempts    Int       @default(0)
+  maxAttempts Int       @default(3)
+  result      Json?
+  error       String?
+  schoolId    String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  completedAt DateTime?
+
+  @@index([queueName])
+  @@index([status])
+  @@index([schoolId])
+  @@map("job_queue")
+}
