@@ -1,0 +1,433 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ------------------------------------------------------------------
+// Phase 1.1/1.2 — Infrastructure foundation only.
+// No business/domain models are defined yet. This schema exists so
+// PrismaClient can be generated and the connection lifecycle, health
+// checks, and migration tooling can be validated end-to-end.
+//
+// Every future business model MUST include the following enterprise
+// base fields (copy this block into new models):
+//
+//   id            String    @id @default(uuid())
+//   tenantId      String    @map("tenant_id")
+//   schoolGroupId String?   @map("school_group_id")
+//   schoolId      String?   @map("school_id")
+//   campusId      String?   @map("campus_id")
+//   version       Int       @default(1)
+//   createdAt     DateTime  @default(now()) @map("created_at")
+//   updatedAt     DateTime  @updatedAt @map("updated_at")
+//   deletedAt     DateTime? @map("deleted_at")
+//   createdBy     String?   @map("created_by")
+//   updatedBy     String?   @map("updated_by")
+//   deletedBy     String?   @map("deleted_by")
+//
+//   @@index([tenantId])
+//   @@index([deletedAt])
+// ------------------------------------------------------------------
+
+model HealthCheck {
+  id        String   @id @default(uuid())
+  status    String
+  checkedAt DateTime @default(now())
+
+  @@map("health_checks")
+}
+
+// Infrastructure-only seed tracking — records which seed scripts have
+// run so seeding is idempotent. No business data.
+model SeedLog {
+  id         String   @id @default(uuid())
+  name       String   @unique
+  checksum   String
+  executedAt DateTime @default(now()) @map("executed_at")
+  durationMs Int      @map("duration_ms")
+
+  @@map("seed_logs")
+}
+
+// ====================================================================
+// B2.19 — Enterprise Communication, Messaging & Collaboration
+// Framework.
+//
+// Independent parallel milestone, built on B1.1-B2.2 only (per the
+// EduNexus Parallel Milestone Architecture — B2.3-B2.20 are developed
+// independently and merged at B2.21). Participant/actor/sender IDs
+// below are plain `String` fields, NOT Prisma relations to a User
+// model, because no canonical User model exists in this branch yet
+// (it's being built independently in the parallel D-track). This
+// mirrors the same reconciliation-at-consolidation approach any other
+// parallel milestone touching identity must take until B2.21.
+//
+// All models follow the mandatory enterprise base-field convention
+// documented above (tenantId/schoolGroupId/schoolId/campusId,
+// version, created/updated/deleted at+by).
+// ====================================================================
+
+enum ConversationType {
+  DIRECT
+  GROUP
+  DEPARTMENT
+  INSTITUTION
+  CAMPUS
+  BROADCAST
+}
+
+enum ConversationParticipantRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum MessageType {
+  TEXT
+  RICH
+  FILE
+  IMAGE
+  VOICE
+  SYSTEM
+}
+
+enum MessageDeliveryStatus {
+  QUEUED
+  SENT
+  DELIVERED
+  READ
+  FAILED
+}
+
+enum AnnouncementAudienceType {
+  INSTITUTION
+  CAMPUS
+  DEPARTMENT
+  CUSTOM
+}
+
+enum ModerationTargetType {
+  MESSAGE
+  CONVERSATION
+}
+
+enum ModerationStatus {
+  PENDING
+  REVIEWED
+  DISMISSED
+  ACTIONED
+}
+
+enum CollaborationActivityType {
+  CONVERSATION_CREATED
+  PARTICIPANT_ADDED
+  PARTICIPANT_REMOVED
+  MESSAGE_POSTED
+  ATTACHMENT_SHARED
+  ANNOUNCEMENT_PUBLISHED
+}
+
+model Conversation {
+  id               String            @id @default(uuid())
+  tenantId         String            @map("tenant_id")
+  schoolGroupId    String?           @map("school_group_id")
+  schoolId         String?           @map("school_id")
+  campusId         String?           @map("campus_id")
+  version          Int               @default(1)
+
+  type             ConversationType
+  title            String?
+  isLocked         Boolean           @default(false) @map("is_locked")
+  lockedReason     String?           @map("locked_reason")
+  linkedEntityType String?           @map("linked_entity_type")
+  linkedEntityId   String?           @map("linked_entity_id")
+  lastMessageAt    DateTime?         @map("last_message_at")
+
+  createdAt        DateTime          @default(now()) @map("created_at")
+  updatedAt        DateTime          @updatedAt @map("updated_at")
+  deletedAt        DateTime?         @map("deleted_at")
+  createdBy        String?           @map("created_by")
+  updatedBy        String?           @map("updated_by")
+  deletedBy        String?           @map("deleted_by")
+
+  participants     ConversationParticipant[]
+  messages         Message[]
+
+  @@index([tenantId])
+  @@index([deletedAt])
+  @@index([tenantId, type])
+  @@index([tenantId, linkedEntityType, linkedEntityId])
+  @@map("comm_conversations")
+}
+
+model ConversationParticipant {
+  id                String                      @id @default(uuid())
+  tenantId          String                      @map("tenant_id")
+  schoolGroupId     String?                     @map("school_group_id")
+  schoolId          String?                     @map("school_id")
+  campusId          String?                     @map("campus_id")
+  version           Int                         @default(1)
+
+  conversationId    String                      @map("conversation_id")
+  conversation      Conversation                @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  participantId     String                      @map("participant_id")
+  role              ConversationParticipantRole @default(MEMBER)
+  isMuted           Boolean                     @default(false) @map("is_muted")
+  mutedUntil        DateTime?                   @map("muted_until")
+  isPinned          Boolean                     @default(false) @map("is_pinned")
+  isArchived        Boolean                     @default(false) @map("is_archived")
+  lastReadMessageId String?                     @map("last_read_message_id")
+  lastReadAt        DateTime?                   @map("last_read_at")
+  joinedAt          DateTime                    @default(now()) @map("joined_at")
+  leftAt            DateTime?                   @map("left_at")
+
+  createdAt         DateTime                    @default(now()) @map("created_at")
+  updatedAt         DateTime                    @updatedAt @map("updated_at")
+  deletedAt         DateTime?                   @map("deleted_at")
+  createdBy         String?                     @map("created_by")
+  updatedBy         String?                     @map("updated_by")
+  deletedBy         String?                     @map("deleted_by")
+
+  @@unique([conversationId, participantId])
+  @@index([tenantId])
+  @@index([deletedAt])
+  @@index([tenantId, participantId])
+  @@map("comm_conversation_participants")
+}
+
+model Message {
+  id                     String       @id @default(uuid())
+  tenantId               String       @map("tenant_id")
+  schoolGroupId          String?      @map("school_group_id")
+  schoolId               String?      @map("school_id")
+  campusId               String?      @map("campus_id")
+  version                Int          @default(1)
+
+  conversationId         String       @map("conversation_id")
+  conversation           Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId               String       @map("sender_id")
+  type                   MessageType  @default(TEXT)
+  content                String       @db.Text
+  replyToMessageId       String?      @map("reply_to_message_id")
+  forwardedFromMessageId String?      @map("forwarded_from_message_id")
+  isEdited               Boolean      @default(false) @map("is_edited")
+  editedAt               DateTime?    @map("edited_at")
+  isDeleted              Boolean      @default(false) @map("is_deleted")
+
+  createdAt              DateTime     @default(now()) @map("created_at")
+  updatedAt              DateTime     @updatedAt @map("updated_at")
+  deletedAt              DateTime?    @map("deleted_at")
+  createdBy              String?      @map("created_by")
+  updatedBy              String?      @map("updated_by")
+  deletedBy              String?      @map("deleted_by")
+
+  attachments            MessageAttachment[]
+  reactions              MessageReaction[]
+  mentions               MessageMention[]
+  deliveryReceipts       MessageDeliveryReceipt[]
+
+  @@index([tenantId])
+  @@index([deletedAt])
+  @@index([tenantId, conversationId, createdAt])
+  @@index([tenantId, senderId])
+  @@map("comm_messages")
+}
+
+model MessageAttachment {
+  id              String    @id @default(uuid())
+  tenantId        String    @map("tenant_id")
+  schoolGroupId   String?   @map("school_group_id")
+  schoolId        String?   @map("school_id")
+  campusId        String?   @map("campus_id")
+  version         Int       @default(1)
+
+  messageId       String    @map("message_id")
+  message         Message   @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  storageKey      String    @map("storage_key")
+  fileName        String    @map("file_name")
+  mimeType        String    @map("mime_type")
+  sizeBytes       Int       @map("size_bytes")
+  kind            String    @default("FILE")
+  durationSeconds Int?      @map("duration_seconds")
+
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+  createdBy       String?   @map("created_by")
+  updatedBy       String?   @map("updated_by")
+  deletedBy       String?   @map("deleted_by")
+
+  @@index([tenantId])
+  @@index([deletedAt])
+  @@index([tenantId, messageId])
+  @@map("comm_message_attachments")
+}
+
+model MessageReaction {
+  id            String    @id @default(uuid())
+  tenantId      String    @map("tenant_id")
+  schoolGroupId String?   @map("school_group_id")
+  schoolId      String?   @map("school_id")
+  campusId      String?   @map("campus_id")
+  version       Int       @default(1)
+
+  messageId     String    @map("message_id")
+  message       Message   @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  participantId String    @map("participant_id")
+  emoji         String
+
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+  createdBy     String?   @map("created_by")
+  updatedBy     String?   @map("updated_by")
+  deletedBy     String?   @map("deleted_by")
+
+  @@unique([messageId, participantId, emoji])
+  @@index([tenantId])
+  @@map("comm_message_reactions")
+}
+
+model MessageMention {
+  id                     String    @id @default(uuid())
+  tenantId               String    @map("tenant_id")
+  schoolGroupId          String?   @map("school_group_id")
+  schoolId               String?   @map("school_id")
+  campusId               String?   @map("campus_id")
+  version                Int       @default(1)
+
+  messageId              String    @map("message_id")
+  message                Message   @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  mentionedParticipantId String    @map("mentioned_participant_id")
+
+  createdAt              DateTime  @default(now()) @map("created_at")
+  updatedAt              DateTime  @updatedAt @map("updated_at")
+  deletedAt              DateTime? @map("deleted_at")
+  createdBy              String?   @map("created_by")
+  updatedBy              String?   @map("updated_by")
+  deletedBy              String?   @map("deleted_by")
+
+  @@unique([messageId, mentionedParticipantId])
+  @@index([tenantId])
+  @@index([tenantId, mentionedParticipantId])
+  @@map("comm_message_mentions")
+}
+
+model MessageDeliveryReceipt {
+  id            String                @id @default(uuid())
+  tenantId      String                @map("tenant_id")
+  schoolGroupId String?               @map("school_group_id")
+  schoolId      String?               @map("school_id")
+  campusId      String?               @map("campus_id")
+  version       Int                   @default(1)
+
+  messageId     String                @map("message_id")
+  message       Message               @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  participantId String                @map("participant_id")
+  status        MessageDeliveryStatus @default(QUEUED)
+  statusAt      DateTime              @default(now()) @map("status_at")
+  retryCount    Int                   @default(0) @map("retry_count")
+  failureReason String?               @map("failure_reason")
+
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+  createdBy     String?   @map("created_by")
+  updatedBy     String?   @map("updated_by")
+  deletedBy     String?   @map("deleted_by")
+
+  @@unique([messageId, participantId])
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@map("comm_message_delivery_receipts")
+}
+
+model Announcement {
+  id             String                   @id @default(uuid())
+  tenantId       String                   @map("tenant_id")
+  schoolGroupId  String?                  @map("school_group_id")
+  schoolId       String?                  @map("school_id")
+  campusId       String?                  @map("campus_id")
+  version        Int                      @default(1)
+
+  title          String
+  body           String                   @db.Text
+  audienceType   AnnouncementAudienceType @map("audience_type")
+  audienceFilter Json?                    @map("audience_filter")
+  scheduledAt    DateTime?                @map("scheduled_at")
+  publishedAt    DateTime?                @map("published_at")
+  isPublished    Boolean                  @default(false) @map("is_published")
+
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  deletedAt      DateTime? @map("deleted_at")
+  createdBy      String?   @map("created_by")
+  updatedBy      String?   @map("updated_by")
+  deletedBy      String?   @map("deleted_by")
+
+  @@index([tenantId])
+  @@index([deletedAt])
+  @@index([tenantId, isPublished, scheduledAt])
+  @@map("comm_announcements")
+}
+
+model ModerationFlag {
+  id             String               @id @default(uuid())
+  tenantId       String               @map("tenant_id")
+  schoolGroupId  String?              @map("school_group_id")
+  schoolId       String?              @map("school_id")
+  campusId       String?              @map("campus_id")
+  version        Int                  @default(1)
+
+  targetType     ModerationTargetType @map("target_type")
+  targetId       String               @map("target_id")
+  flaggedBy      String               @map("flagged_by")
+  reason         String
+  status         ModerationStatus     @default(PENDING)
+  reviewedBy     String?              @map("reviewed_by")
+  reviewedAt     DateTime?            @map("reviewed_at")
+  resolutionNote String?              @map("resolution_note")
+
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  deletedAt      DateTime? @map("deleted_at")
+  createdBy      String?   @map("created_by")
+  updatedBy      String?   @map("updated_by")
+  deletedBy      String?   @map("deleted_by")
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([tenantId, targetType, targetId])
+  @@map("comm_moderation_flags")
+}
+
+model CollaborationActivity {
+  id            String                    @id @default(uuid())
+  tenantId      String                    @map("tenant_id")
+  schoolGroupId String?                   @map("school_group_id")
+  schoolId      String?                   @map("school_id")
+  campusId      String?                   @map("campus_id")
+  version       Int                       @default(1)
+
+  activityType  CollaborationActivityType @map("activity_type")
+  actorId       String                    @map("actor_id")
+  entityType    String                    @map("entity_type")
+  entityId      String                    @map("entity_id")
+  metadata      Json?
+
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+  createdBy     String?   @map("created_by")
+  updatedBy     String?   @map("updated_by")
+  deletedBy     String?   @map("deleted_by")
+
+  @@index([tenantId])
+  @@index([tenantId, entityType, entityId])
+  @@index([tenantId, createdAt])
+  @@map("comm_collaboration_activities")
+}
