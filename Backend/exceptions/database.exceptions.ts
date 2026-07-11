@@ -1,12 +1,7 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
 
 export class DatabaseException extends HttpException {
-  constructor(
-    message: string,
-    statusCode: HttpStatus = HttpStatus.INTERNAL_SERVER_ERROR,
-    details?: unknown,
-    public readonly cause?: unknown,
-  ) {
+  constructor(message: string, statusCode: HttpStatus = HttpStatus.INTERNAL_SERVER_ERROR, details?: unknown) {
     super({ message, details }, statusCode);
   }
 }
@@ -46,6 +41,6 @@ export class DatabaseErrorHandler {
 
   static wrap(error: unknown, context: string): DatabaseException {
     const message = error instanceof Error ? error.message : 'Unknown database error';
-    return new DatabaseException(`${context}: ${message}`, undefined, undefined, error);
+    return new DatabaseException(`${context}: ${message}`);
   }
 }

@@ -31,9 +31,4 @@ describe('FilterHelper', () => {
       deletedAt: { not: null },
     });
   });
-
-  it('builds a between filter from a two-element tuple', () => {
-    const where = FilterHelper.buildWhere([{ field: 'age', operator: 'between', value: [18, 65] }]);
-    expect(where).toEqual({ age: { gte: 18, lte: 65 } });
-  });
 });

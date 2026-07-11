@@ -61,7 +61,6 @@ export type FilterOperator =
   | 'gte'
   | 'lt'
   | 'lte'
-  | 'between'
   | 'contains'
   | 'startsWith'
   | 'endsWith'
