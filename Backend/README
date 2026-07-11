@@ -1,1 +1,1260 @@
+# EDUNEXUS ENTERPRISE BACKEND
+
+## PHASE 1.4 – SHARED CORE FRAMEWORK
+
+You are continuing the EduNexus Enterprise Backend.
+
+**Phase 1.1 (Project Bootstrap), Phase 1.2 (Database Foundation), and Phase 1.3 (Enterprise Infrastructure Services) are complete.**
+
+Do NOT recreate the project.
+
+Do NOT regenerate existing files unless integration requires it.
+
+Generate only **production-ready source code files**.
+
+Do NOT generate documentation.
+
+Do NOT generate planning documents.
+
+Do NOT generate placeholder implementations.
+
+Every generated file must compile successfully.
+
+---
+
+# TECHNOLOGY STACK
+
+* NestJS
+* TypeScript
+* Prisma ORM
+* PostgreSQL
+* Redis
+* RabbitMQ
+* Docker
+
+Continue using the existing enterprise architecture.
+
+---
+
+# OBJECTIVE
+
+Build the **Shared Core Framework** that every future EduNexus module depends on.
+
+This phase creates reusable enterprise components to eliminate duplicated code across all modules.
+
+**Do NOT generate Authentication, Users, Roles, Permissions, or business modules.**
+
+---
+
+# IMPLEMENT
+
+## 1. Common Module
+
+Generate:
+
+* Common Module
+* Common Services
+* Shared Providers
+* Global Constants
+* Shared Enums
+* Shared Interfaces
+* Shared Types
+
+---
+
+## 2. Base Classes
+
+Generate reusable base classes for:
+
+* Base Entity
+* Base Service
+* Base Repository
+* Base Controller
+* Base DTO
+* Base Response
+* Base Exception
+* Base Validator
+
+---
+
+## 3. DTO Framework
+
+Generate reusable DTO infrastructure including:
+
+* Pagination DTO
+* Sorting DTO
+* Filtering DTO
+* Search DTO
+* API Response DTO
+* Error Response DTO
+* Metadata DTO
+
+---
+
+## 4. Response Framework
+
+Generate:
+
+* Response Builder
+* Success Responses
+* Error Responses
+* Pagination Responses
+* API Metadata
+* Standard Response Format
+
+---
+
+## 5. Exception Framework
+
+Generate:
+
+* Business Exceptions
+* Validation Exceptions
+* Database Exceptions
+* Infrastructure Exceptions
+* Exception Factory
+* Exception Utilities
+
+---
+
+## 6. Utility Framework
+
+Generate enterprise utilities for:
+
+* UUID
+* Date & Time
+* String Utilities
+* Number Utilities
+* Object Utilities
+* Array Utilities
+* File Utilities
+* Crypto Utilities
+* Environment Utilities
+
+---
+
+## 7. Validation Framework
+
+Generate:
+
+* Custom Validators
+* Validation Decorators
+* Validation Helpers
+* Common Validation Rules
+
+---
+
+## 8. Helper Framework
+
+Generate helpers for:
+
+* Pagination
+* Search
+* Filtering
+* Sorting
+* Data Transformation
+* Mapping
+* Serialization
+* Deserialization
+
+---
+
+## 9. Constants & Enums
+
+Generate centralized:
+
+* Application Constants
+* Database Constants
+* API Constants
+* Cache Constants
+* Queue Constants
+* Error Codes
+* System Enums
+
+---
+
+## 10. Shared Interfaces
+
+Generate interfaces for:
+
+* Services
+* Repositories
+* Events
+* Storage
+* Cache
+* Queue
+* Notifications
+* Responses
+
+---
+
+## 11. Common Decorators
+
+Generate reusable decorators including:
+
+* Current Tenant
+* Current School
+* Current Campus
+* Request Metadata
+* API Metadata
+* Pagination
+* Sorting
+* Filtering
+
+(Authentication-related decorators should be interface-ready only and not implement authentication logic.)
+
+---
+
+## 12. Testing Framework
+
+Generate:
+
+* Shared Test Utilities
+* Mock Factories
+* Test Helpers
+* Common Test Fixtures
+
+---
+
+# PROJECT STRUCTURE
+
+Create or update folders such as:
+
+* src/common/
+* src/common/base/
+* src/common/constants/
+* src/common/decorators/
+* src/common/dto/
+* src/common/enums/
+* src/common/exceptions/
+* src/common/helpers/
+* src/common/interfaces/
+* src/common/utils/
+* src/common/validators/
+* src/common/testing/
+
+---
+
+# REQUIREMENTS
+
+* Must integrate with Phases 1.1–1.3.
+* Must compile successfully.
+* Must follow NestJS best practices.
+* Must be reusable across every EduNexus module.
+* Must eliminate duplicate code.
+* Must be production-ready.
+* Must support enterprise scalability.
+* Must NOT generate Authentication.
+* Must NOT generate Users.
+* Must NOT generate Roles.
+* Must NOT generate any business modules.
+
+---
+
+# OUTPUT RULES
+
+Generate only real production-ready source code files.
+
+No documentation.
+
+No markdown explanations.
+
+No TODO comments.
+
+No placeholder implementations.
+
+Generate complete implementations.
+
+If the response limit is reached, continue exactly where you stopped until the entire Phase 1.4 Shared Core Framework subsystem has been completed.
+
+
+
+# EDUNEXUS ENTERPRISE BACKEND
+
+## PHASE 1.2 – DATABASE FOUNDATION
+
+You are continuing the EduNexus Enterprise Backend.
+
+**Phase 1.1 (Project Bootstrap) is complete.**
+
+Do NOT recreate the project.
+
+Do NOT regenerate existing files unless integration requires it.
+
+Generate only **production-ready source code files**.
+
+Do NOT generate documentation.
+
+Do NOT generate planning documents.
+
+Do NOT generate placeholder implementations.
+
+Every generated file must compile successfully.
+
+---
+
+# TECHNOLOGY STACK
+
+* NestJS
+* TypeScript
+* Prisma ORM
+* PostgreSQL
+* Redis
+* RabbitMQ
+* Docker
+
+Continue using the existing architecture from Phase 1.1.
+
+---
+
+# OBJECTIVE
+
+Build the complete Enterprise Database Foundation that will support **every current and future EduNexus module**.
+
+This is **infrastructure only**.
+
+Do **NOT** generate Authentication, Users, Roles, Permissions, Students, Teachers, Finance, HR, Library, or any business modules.
+
+---
+
+# IMPLEMENT
+
+## 1. Enterprise Database Module
+
+Generate:
+
+* Database Module
+* Database Service
+* Database Providers
+* Connection Manager
+* Connection Lifecycle
+* Connection Retry Strategy
+* Connection Pool Configuration
+* Database Shutdown Hooks
+
+---
+
+## 2. Prisma Enterprise Foundation
+
+Implement:
+
+* Prisma Module
+* Prisma Service
+* Prisma Extensions
+* Prisma Middleware
+* Query Logging
+* Transaction Manager
+* Batch Operations
+* Optimized Prisma Client
+
+---
+
+## 3. Enterprise Base Models
+
+Create reusable enterprise models supporting:
+
+* UUID Primary Keys
+* created_at
+* updated_at
+* deleted_at (Soft Delete)
+* created_by
+* updated_by
+* deleted_by
+* version (Optimistic Locking)
+* tenant_id
+* school_group_id
+* school_id
+* campus_id
+
+These become mandatory for future entities.
+
+---
+
+## 4. Multi-Tenant Foundation
+
+Generate infrastructure for:
+
+* Tenant Context
+* Tenant Resolver
+* Tenant Helpers
+* Tenant Utilities
+* Tenant Isolation Middleware
+* Tenant Query Helpers
+
+---
+
+## 5. Database Utilities
+
+Generate:
+
+* Transaction Service
+* Query Builder
+* Pagination Helper
+* Search Helper
+* Filter Helper
+* Sort Helper
+* Database Constants
+* Database Error Handler
+
+---
+
+## 6. Database Performance
+
+Generate:
+
+* Query Performance Logger
+* Slow Query Detection
+* Connection Pool Monitor
+* Index Helper Utilities
+
+---
+
+## 7. Seed Infrastructure
+
+Generate:
+
+* Seed Runner
+* Seed Configuration
+* Seed Utilities
+* Seed Base Classes
+
+Infrastructure only.
+
+No sample business data.
+
+---
+
+## 8. Database Health
+
+Generate:
+
+* Database Health Service
+* Readiness Checks
+* Liveness Checks
+* Connection Monitoring
+* Database Metrics
+
+Integrate with the existing Health Module.
+
+---
+
+## 9. Configuration
+
+Extend configuration for:
+
+* PostgreSQL
+* Connection Pool
+* SSL
+* Retry Strategy
+* Timeouts
+* Prisma Options
+
+---
+
+## 10. Testing
+
+Generate:
+
+* Unit Tests
+* Integration Tests
+* Transaction Tests
+* Connection Tests
+* Multi-Tenant Tests
+* Seed Tests
+
+---
+
+# PROJECT STRUCTURE
+
+Create or update folders such as:
+
+* src/database/
+* src/database/config/
+* src/database/constants/
+* src/database/context/
+* src/database/exceptions/
+* src/database/helpers/
+* src/database/interfaces/
+* src/database/middleware/
+* src/database/monitoring/
+* src/database/providers/
+* src/database/services/
+* src/database/testing/
+* prisma/
+
+---
+
+# REQUIREMENTS
+
+* Must integrate with Phase 1.1.
+* Must compile successfully.
+* Must follow NestJS best practices.
+* Must use Prisma correctly.
+* Must support PostgreSQL.
+* Must support enterprise multi-tenancy.
+* Must support transactions.
+* Must support optimistic locking.
+* Must support soft deletes.
+* Must support future scalability.
+* Must NOT generate business entities.
+* Must NOT generate Authentication.
+* Must NOT generate Users.
+* Must NOT generate Roles.
+
+---
+
+# OUTPUT RULES
+
+Generate only real production-ready source code files.
+
+No documentation.
+
+No markdown explanations.
+
+No TODO comments.
+
+No placeholder implementations.
+
+Generate complete implementations.
+
+If the response limit is reached, continue exactly where you stopped until the entire Phase 1.2 Database Foundation subsystem has been completed.
+
+
+# EDUNEXUS ENTERPRISE BACKEND
+
+## PHASE 1.3 – ENTERPRISE INFRASTRUCTURE SERVICES
+
+You are continuing the EduNexus Enterprise Backend.
+
+**Phase 1.1 (Project Bootstrap) and Phase 1.2 (Database Foundation) are complete.**
+
+Do NOT recreate the project.
+
+Do NOT regenerate existing files unless integration requires it.
+
+Generate only **production-ready source code files**.
+
+Do NOT generate documentation.
+
+Do NOT generate planning documents.
+
+Do NOT generate placeholder implementations.
+
+Every generated file must compile successfully.
+
+---
+
+# TECHNOLOGY STACK
+
+* NestJS
+* TypeScript
+* Prisma ORM
+* PostgreSQL
+* Redis
+* RabbitMQ
+* Docker
+
+Continue using the existing project architecture.
+
+---
+
+# OBJECTIVE
+
+Build the complete **Enterprise Infrastructure Services** layer.
+
+This subsystem provides all reusable infrastructure that every EduNexus module will depend on.
+
+Do **NOT** generate Authentication, Users, Roles, Permissions, or any business modules.
+
+---
+
+# IMPLEMENT
+
+## 1. Redis Enterprise Infrastructure
+
+Generate:
+
+* Redis Module
+* Redis Service
+* Cache Module
+* Cache Service
+* Cache Manager
+* Cache Decorators
+* Cache Keys
+* Cache Utilities
+* Distributed Lock Service
+* Session Cache Support
+* TTL Manager
+* Cache Invalidation Manager
+
+---
+
+## 2. RabbitMQ Enterprise Infrastructure
+
+Generate:
+
+* RabbitMQ Module
+* RabbitMQ Service
+* Publisher Service
+* Consumer Service
+* Queue Manager
+* Exchange Manager
+* Queue Registry
+* Dead Letter Queue Manager
+* Retry Strategy
+* Message Serializer
+* Message Validator
+* Queue Configuration
+
+---
+
+## 3. Enterprise Event Bus
+
+Generate:
+
+* Event Module
+* Event Bus
+* Event Dispatcher
+* Event Registry
+* Domain Events
+* Integration Events
+* Event Publisher
+* Event Subscriber
+* Event Handler Base Classes
+* Event Middleware
+
+---
+
+## 4. Background Jobs
+
+Generate:
+
+* Job Module
+* Queue Workers
+* Delayed Jobs
+* Scheduled Jobs
+* Retry Jobs
+* Failed Job Recovery
+* Queue Monitoring
+* Worker Manager
+
+---
+
+## 5. Scheduler
+
+Generate:
+
+* Scheduler Module
+* Cron Service
+* Task Scheduler
+* Queue Scheduler
+* Scheduled Task Registry
+* Scheduler Utilities
+
+---
+
+## 6. Enterprise Storage
+
+Create provider abstraction supporting:
+
+* Local Storage
+* MinIO
+* Amazon S3
+* Azure Blob Storage
+* Google Cloud Storage
+
+Generate:
+
+* Storage Module
+* Storage Service
+* Upload Service
+* Download Service
+* Delete Service
+* File Metadata Service
+* Signed URL Service
+* Storage Provider Interfaces
+* Storage Factory
+
+---
+
+## 7. Email Infrastructure
+
+Generate:
+
+* Email Module
+* Email Service
+* SMTP Provider
+* Email Queue
+* Email Template Engine
+* Email Provider Interface
+* Email Factory
+
+---
+
+## 8. SMS Infrastructure
+
+Generate:
+
+* SMS Module
+* SMS Service
+* SMS Queue
+* SMS Provider Interface
+* SMS Factory
+
+---
+
+## 9. Push Notification Infrastructure
+
+Generate:
+
+* Push Module
+* Push Service
+* Firebase Provider
+* Device Registration
+* Notification Queue
+* Push Provider Interface
+* Push Factory
+
+---
+
+## 10. Monitoring & Observability
+
+Generate:
+
+* Infrastructure Monitoring Module
+* Redis Health Indicator
+* RabbitMQ Health Indicator
+* Queue Health Indicator
+* Storage Health Indicator
+* Infrastructure Metrics Service
+* Performance Monitoring
+* Correlation ID Support
+* Request Context Service
+
+Integrate with the existing Health Module.
+
+---
+
+## 11. Infrastructure Configuration
+
+Extend the configuration system to support:
+
+* Redis
+* RabbitMQ
+* Scheduler
+* Queue
+* Storage Providers
+* Email Providers
+* SMS Providers
+* Push Providers
+* Cache Configuration
+
+---
+
+## 12. Shared Infrastructure Interfaces
+
+Generate reusable interfaces for:
+
+* Cache
+* Queue
+* Events
+* Storage
+* Email
+* SMS
+* Push Notifications
+* Background Jobs
+
+---
+
+## 13. Testing
+
+Generate:
+
+* Unit Tests
+* Integration Tests
+* Redis Tests
+* RabbitMQ Tests
+* Cache Tests
+* Event Bus Tests
+* Scheduler Tests
+* Storage Tests
+* Email Tests
+* SMS Tests
+* Push Notification Tests
+
+---
+
+# PROJECT STRUCTURE
+
+Create or update folders such as:
+
+* src/infrastructure/cache/
+* src/infrastructure/redis/
+* src/infrastructure/rabbitmq/
+* src/infrastructure/events/
+* src/infrastructure/jobs/
+* src/infrastructure/scheduler/
+* src/infrastructure/storage/
+* src/infrastructure/email/
+* src/infrastructure/sms/
+* src/infrastructure/push/
+* src/infrastructure/monitoring/
+* src/infrastructure/interfaces/
+* src/infrastructure/config/
+
+Generate all required:
+
+* Modules
+* Services
+* Providers
+* Interfaces
+* DTOs
+* Constants
+* Helpers
+* Utilities
+* Tests
+
+---
+
+# REQUIREMENTS
+
+* Must integrate with Phases 1.1 and 1.2.
+* Must compile successfully.
+* Must follow NestJS best practices.
+* Must support horizontal scaling.
+* Must use dependency injection correctly.
+* Must be production-ready.
+* Must be reusable by all future EduNexus modules.
+* Must NOT generate Authentication.
+* Must NOT generate Users.
+* Must NOT generate Roles.
+* Must NOT generate any business modules.
+
+---
+
+# OUTPUT RULES
+
+Generate only real production-ready source code files.
+
+No documentation.
+
+No markdown explanations.
+
+No TODO comments.
+
+No placeholder implementations.
+
+Generate complete implementations.
+
+If the response limit is reached, continue exactly where you stopped until the entire Phase 1.3 Enterprise Infrastructure Services subsystem has been completed.
+
+
+# EDUNEXUS ENTERPRISE BACKEND
+
+## PHASE 1.4 – SHARED CORE FRAMEWORK
+
+You are continuing the EduNexus Enterprise Backend.
+
+**Phase 1.1 (Project Bootstrap), Phase 1.2 (Database Foundation), and Phase 1.3 (Enterprise Infrastructure Services) are complete.**
+
+Do NOT recreate the project.
+
+Do NOT regenerate existing files unless integration requires it.
+
+Generate only **production-ready source code files**.
+
+Do NOT generate documentation.
+
+Do NOT generate planning documents.
+
+Do NOT generate placeholder implementations.
+
+Every generated file must compile successfully.
+
+---
+
+# TECHNOLOGY STACK
+
+* NestJS
+* TypeScript
+* Prisma ORM
+* PostgreSQL
+* Redis
+* RabbitMQ
+* Docker
+
+Continue using the existing enterprise architecture.
+
+---
+
+# OBJECTIVE
+
+Build the **Enterprise Shared Core Framework**.
+
+This subsystem provides reusable code, base classes, utilities, decorators, interfaces, helpers, validation, response standards, exception handling, and testing infrastructure used by **every future EduNexus module**.
+
+**Do NOT generate Authentication, Users, Roles, Permissions, or any business modules.**
+
+---
+
+# IMPLEMENT
+
+## 1. Common Module
+
+Generate:
+
+* Common Module
+* Shared Providers
+* Shared Services
+* Global Constants
+* Global Enums
+* Shared Types
+* Shared Interfaces
+
+---
+
+## 2. Enterprise Base Classes
+
+Generate reusable base classes for:
+
+* BaseEntity
+* BaseRepository
+* BaseService
+* BaseController
+* BaseCrudService
+* BaseCrudController
+* BaseDTO
+* BaseResponse
+* BaseException
+* BaseValidator
+
+---
+
+## 3. DTO Framework
+
+Generate reusable DTO infrastructure including:
+
+* PaginationDTO
+* SearchDTO
+* FilterDTO
+* SortDTO
+* CursorPaginationDTO
+* BulkOperationDTO
+* MetadataDTO
+* ApiResponseDTO
+* ErrorResponseDTO
+
+---
+
+## 4. Response Framework
+
+Generate:
+
+* Response Builder
+* Success Response Builder
+* Error Response Builder
+* Pagination Response Builder
+* API Metadata Builder
+* Standard Response Formatter
+
+Every future API must use this framework.
+
+---
+
+## 5. Enterprise Exception Framework
+
+Generate:
+
+* BusinessException
+* ValidationException
+* ConflictException
+* ResourceNotFoundException
+* ForbiddenException
+* InfrastructureException
+* DatabaseException
+* ExceptionFactory
+* ExceptionUtilities
+
+---
+
+## 6. Utility Framework
+
+Generate enterprise utilities for:
+
+* UUID
+* Date & Time
+* Time Zones
+* String
+* Numbers
+* Arrays
+* Objects
+* Files
+* Encryption
+* Hashing
+* Random Generators
+* Environment Helpers
+* Reflection Helpers
+
+---
+
+## 7. Validation Framework
+
+Generate:
+
+* Custom Validators
+* Validation Decorators
+* Validation Helpers
+* Validation Constants
+* Enterprise Validation Rules
+
+---
+
+## 8. Mapping Framework
+
+Generate:
+
+* Entity Mapper
+* DTO Mapper
+* Response Mapper
+* Object Mapper
+* Transformation Helpers
+
+---
+
+## 9. Pagination, Search & Filtering
+
+Generate reusable enterprise helpers for:
+
+* Offset Pagination
+* Cursor Pagination
+* Search
+* Advanced Filtering
+* Multi-column Sorting
+* Query Building
+
+---
+
+## 10. Constants
+
+Generate centralized constants for:
+
+* Application
+* API
+* Database
+* Cache
+* Queue
+* Storage
+* Email
+* SMS
+* Notifications
+* Validation
+* Error Codes
+
+---
+
+## 11. Enums
+
+Generate enterprise enums for:
+
+* Status
+* Record State
+* Environment
+* Log Levels
+* Sort Order
+* File Types
+* Notification Types
+* Queue Status
+* Cache Keys
+
+---
+
+## 12. Shared Interfaces
+
+Generate reusable interfaces for:
+
+* Services
+* Repositories
+* Events
+* Cache
+* Queue
+* Storage
+* Email
+* SMS
+* Notifications
+* Responses
+* Pagination
+* Search
+
+---
+
+## 13. Enterprise Decorators
+
+Generate reusable decorators including:
+
+* CurrentTenant
+* CurrentSchool
+* CurrentCampus
+* RequestMetadata
+* Pagination
+* Sorting
+* Filtering
+* Search
+* ApiMetadata
+* Cacheable
+* Transactional
+
+(Authentication decorators should only provide extension points, not authentication logic.)
+
+---
+
+## 14. Serialization Framework
+
+Generate:
+
+* Serializer
+* Deserializer
+* Transformation Utilities
+* JSON Helpers
+* Data Formatting Helpers
+
+---
+
+## 15. Common Testing Framework
+
+Generate:
+
+* Mock Factory
+* Test Utilities
+* Shared Fixtures
+* Fake Data Builders
+* Integration Test Helpers
+* Unit Test Helpers
+
+---
+
+# PROJECT STRUCTURE
+
+Create or update folders such as:
+
+* src/common/
+* src/common/base/
+* src/common/constants/
+* src/common/decorators/
+* src/common/dto/
+* src/common/enums/
+* src/common/exceptions/
+* src/common/helpers/
+* src/common/interfaces/
+* src/common/mappers/
+* src/common/responses/
+* src/common/testing/
+* src/common/types/
+* src/common/utils/
+* src/common/validators/
+
+Generate all required:
+
+* Modules
+* Services
+* Providers
+* Classes
+* Interfaces
+* DTOs
+* Decorators
+* Helpers
+* Utilities
+* Constants
+* Enums
+* Tests
+
+---
+
+# REQUIREMENTS
+
+* Must integrate with Phases 1.1–1.3.
+* Must compile successfully.
+* Must follow NestJS best practices.
+* Must eliminate duplicate code.
+* Must be reusable across every EduNexus subsystem.
+* Must support enterprise scalability.
+* Must be production-ready.
+* Must NOT generate Authentication.
+* Must NOT generate Users.
+* Must NOT generate Roles.
+* Must NOT generate any business modules.
+
+---
+
+# OUTPUT RULES
+
+Generate only real production-ready source code files.
+
+No documentation.
+
+No markdown explanations.
+
+No TODO comments.
+
+No placeholder implementations.
+
+Generate complete implementations.
+
+If the response limit is reached, continue exactly where you stopped until the entire Phase 1.4 Shared Core Framework subsystem has been completed.
+
+
+Phase 1.5 – Security Foundation
+
+This is not Authentication. It provides the security infrastructure that authentication and every other module will rely on.
+
+It should include:
+
+Security Module
+Helmet configuration
+CORS configuration
+CSP (Content Security Policy)
+CSRF protection (where applicable)
+Rate Limiting / Throttling
+Security Headers
+Request ID / Correlation ID
+Encryption Service
+Hashing Service
+Secrets Management
+Secure Cookie utilities
+File upload security
+Input sanitization
+Output sanitization
+XSS protection utilities
+SQL injection protection helpers
+Security middleware
+Security interceptors
+Security filters
+Security logging
+Security health monitoring
+
+Do not implement login, JWT authentication, users, or permissions in this phase.
+
+Phase 1.6 – API Foundation
+
+This prepares every future API.
+
+It should include:
+
+API Module
+API Versioning
+Standard API Response Framework
+API Error Framework
+Global Request/Response Models
+Swagger customization
+API Documentation decorators
+Pagination framework
+Filtering framework
+Sorting framework
+Search framework
+Bulk operation framework
+API Metrics
+API Logging
+Request validation
+Response transformation
+API testing infrastructure
+
 
