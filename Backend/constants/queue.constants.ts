@@ -1,0 +1,4 @@
+export const QUEUE_CONSTANTS = {
+  DEFAULT_MAX_ATTEMPTS: 5,
+  DEFAULT_PREFETCH: 10,
+} as const;

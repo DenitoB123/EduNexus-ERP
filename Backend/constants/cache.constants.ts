@@ -1,0 +1,4 @@
+export const CACHE_CONSTANTS = {
+  DEFAULT_TTL_SECONDS: 300,
+  LONG_TTL_SECONDS: 3600,
+} as const;
