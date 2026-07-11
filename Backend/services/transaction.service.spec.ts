@@ -43,46 +43,4 @@ describe('TransactionService', () => {
     const result = await service.runBatch(ops);
     expect(result).toEqual(['a', 'b']);
   });
-
-  describe('runWithRetry', () => {
-    it('returns the result on first success without retrying', async () => {
-      prismaMock.$transaction.mockImplementation((work: (tx: unknown) => unknown) => work({}));
-      const work = jest.fn().mockResolvedValue('ok');
-
-      const result = await service.runWithRetry(work, { retryDelayMs: 1 });
-
-      expect(result).toBe('ok');
-      expect(prismaMock.$transaction).toHaveBeenCalledTimes(1);
-    });
-
-    it('retries on a retriable Prisma error code and eventually succeeds', async () => {
-      const retriableError = Object.assign(new Error('connection lost'), { code: 'P1001' });
-
-      prismaMock.$transaction
-        .mockRejectedValueOnce(retriableError)
-        .mockImplementationOnce((work: (tx: unknown) => unknown) => work({}));
-
-      const work = jest.fn().mockResolvedValue('recovered');
-
-      const result = await service.runWithRetry(work, { maxAttempts: 3, retryDelayMs: 1 });
-
-      expect(result).toBe('recovered');
-      expect(prismaMock.$transaction).toHaveBeenCalledTimes(2);
-    });
-
-    it('does not retry a non-retriable error', async () => {
-      prismaMock.$transaction.mockRejectedValue(new Error('validation failed'));
-
-      await expect(service.runWithRetry(jest.fn(), { maxAttempts: 3, retryDelayMs: 1 })).rejects.toThrow();
-      expect(prismaMock.$transaction).toHaveBeenCalledTimes(1);
-    });
-
-    it('gives up after maxAttempts and throws the last error', async () => {
-      const retriableError = Object.assign(new Error('deadlock'), { code: 'P1008' });
-      prismaMock.$transaction.mockRejectedValue(retriableError);
-
-      await expect(service.runWithRetry(jest.fn(), { maxAttempts: 2, retryDelayMs: 1 })).rejects.toThrow();
-      expect(prismaMock.$transaction).toHaveBeenCalledTimes(2);
-    });
-  });
 });

@@ -17,7 +17,6 @@ import { InfrastructureMetricsService } from '../infrastructure/monitoring/infra
 import { PerformanceMonitoringService } from '../infrastructure/monitoring/performance-monitoring.service';
 import { SecurityHealthIndicator } from '../security/monitoring/security-health.indicator';
 import { SecurityMetrics } from '../security/monitoring/security-metrics.service';
-import { ApiMetricsService } from '../api/monitoring/api-metrics.service';
 
 @ApiTags('Health')
 @Controller('health')
@@ -36,7 +35,6 @@ export class HealthController {
     private readonly performanceMonitoringService: PerformanceMonitoringService,
     private readonly securityHealthIndicator: SecurityHealthIndicator,
     private readonly securityMetrics: SecurityMetrics,
-    private readonly apiMetricsService: ApiMetricsService,
   ) {}
 
   @Public()
@@ -111,15 +109,5 @@ export class HealthController {
   })
   getSecuritySnapshot() {
     return this.securityMetrics.getSnapshot();
-  }
-
-  @Public()
-  @Get('api')
-  @ApiOperation({
-    summary: 'API endpoint metrics snapshot',
-    description: 'Returns per-endpoint request counts, error rates, and timing statistics.',
-  })
-  getApiSnapshot() {
-    return this.apiMetricsService.getSnapshot();
   }
 }

@@ -9,9 +9,6 @@ import { QueueHealthIndicator } from '../infrastructure/monitoring/queue-health.
 import { StorageHealthIndicator } from '../infrastructure/monitoring/storage-health.indicator';
 import { InfrastructureMetricsService } from '../infrastructure/monitoring/infrastructure-metrics.service';
 import { PerformanceMonitoringService } from '../infrastructure/monitoring/performance-monitoring.service';
-import { SecurityHealthIndicator } from '../security/monitoring/security-health.indicator';
-import { SecurityMetrics } from '../security/monitoring/security-metrics.service';
-import { ApiMetricsService } from '../api/monitoring/api-metrics.service';
 
 describe('HealthController', () => {
   let controller: HealthController;
@@ -72,18 +69,6 @@ describe('HealthController', () => {
           provide: PerformanceMonitoringService,
           useValue: { getSnapshot: jest.fn().mockReturnValue({}) },
         },
-        {
-          provide: SecurityHealthIndicator,
-          useValue: { check: jest.fn() },
-        },
-        {
-          provide: SecurityMetrics,
-          useValue: { getSnapshot: jest.fn().mockReturnValue({}) },
-        },
-        {
-          provide: ApiMetricsService,
-          useValue: { getSnapshot: jest.fn().mockReturnValue({}) },
-        },
       ],
     }).compile();
 
@@ -105,9 +90,5 @@ describe('HealthController', () => {
     const result = await controller.checkReadiness();
     expect(healthCheckService.check).toHaveBeenCalled();
     expect(result).toEqual(mockCheckResult);
-  });
-
-  it('getApiSnapshot returns the API metrics snapshot', () => {
-    expect(controller.getApiSnapshot()).toEqual({});
   });
 });

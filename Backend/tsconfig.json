@@ -27,8 +27,7 @@
       "@health/*": ["src/health/*"],
       "@prisma/*": ["src/prisma/*"],
       "@database/*": ["src/database/*"],
-      "@security/*": ["src/security/*"],
-      "@api/*": ["src/api/*"]
+      "@security/*": ["src/security/*"]
     }
   },
   "exclude": ["node_modules", "dist", "test"]

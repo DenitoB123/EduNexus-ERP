@@ -25,10 +25,6 @@ import { SecurityModule } from './security/security.module';
 import { RequestIdMiddleware } from './security/middleware/request-id.middleware';
 import { SecurityInterceptor } from './security/middleware/security.interceptor';
 import { SecurityGuard } from './security/middleware/security.guard';
-import { ApiModule } from './api/api.module';
-import { ApiMetadataMiddleware } from './api/middleware/api-metadata.middleware';
-import { RequestTimingMiddleware } from './api/middleware/request-timing.middleware';
-import { ApiMetricsInterceptor } from './api/monitoring/api-metrics.interceptor';
 import { HealthModule } from './health/health.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
@@ -65,7 +61,6 @@ import { AppController } from './app.controller';
     PushModule,
     InfrastructureMonitoringModule,
     SecurityModule,
-    ApiModule,
     HealthModule,
   ],
   controllers: [AppController],
@@ -79,7 +74,6 @@ import { AppController } from './app.controller';
     { provide: APP_INTERCEPTOR, useClass: LoggingInterceptor },
     { provide: APP_INTERCEPTOR, useClass: SecurityInterceptor },
     { provide: APP_INTERCEPTOR, useClass: PerformanceMonitoringInterceptor },
-    { provide: APP_INTERCEPTOR, useClass: ApiMetricsInterceptor },
     { provide: APP_INTERCEPTOR, useClass: ResponseInterceptor },
     // Guards
     { provide: APP_GUARD, useClass: SecurityGuard },
@@ -89,13 +83,7 @@ import { AppController } from './app.controller';
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
     consumer
-      .apply(
-        RequestIdMiddleware,
-        RequestContextMiddleware,
-        TenantIsolationMiddleware,
-        ApiMetadataMiddleware,
-        RequestTimingMiddleware,
-      )
+      .apply(RequestIdMiddleware, RequestContextMiddleware, TenantIsolationMiddleware)
       .forRoutes('*');
   }
 }

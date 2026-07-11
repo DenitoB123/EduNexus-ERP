@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { VersioningType } from '@nestjs/common';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import compression from 'compression';
 import { AppModule } from './app.module';
@@ -8,8 +9,6 @@ import { AppConfigService } from './config/app-config.service';
 import { AppLoggerService } from './common/logger/app-logger.service';
 import { PrismaService } from './prisma/prisma.service';
 import { HttpSecurityHelper } from './security/helpers/http-security.helper';
-import { createGlobalValidationPipe } from './common/pipes/validation.pipe';
-import { SwaggerConfig } from './api/swagger/swagger.config';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
@@ -31,8 +30,6 @@ async function bootstrap(): Promise<void> {
     defaultVersion: defaultApiVersion,
   });
 
-  app.useGlobalPipes(createGlobalValidationPipe());
-
   const helmetOptions = HttpSecurityHelper.buildHelmetOptions(configService.security);
   app.use(helmet(nodeEnv === 'production' ? helmetOptions : { contentSecurityPolicy: false }));
 
@@ -43,7 +40,26 @@ async function bootstrap(): Promise<void> {
   const prismaService = app.get(PrismaService);
   await prismaService.enableShutdownHooks(app);
 
-  SwaggerConfig.setup(app, configService);
+  const swaggerConfig = new DocumentBuilder()
+    .setTitle(`${name} API`)
+    .setDescription(`${name} Enterprise ERP Backend — Infrastructure Foundation`)
+    .setVersion('1.0')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+      },
+      'access-token',
+    )
+    .build();
+
+  const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig);
+  SwaggerModule.setup(`${globalPrefix}/docs`, app, swaggerDocument, {
+    swaggerOptions: {
+      persistAuthorization: true,
+    },
+  });
 
   registerGracefulShutdown(app, logger, shutdownTimeoutMs);
 
