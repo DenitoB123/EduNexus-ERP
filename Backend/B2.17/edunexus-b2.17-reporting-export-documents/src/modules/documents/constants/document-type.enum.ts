@@ -1,0 +1,22 @@
+export enum DocumentType {
+  LETTER = 'LETTER',
+  CERTIFICATE = 'CERTIFICATE',
+  TRANSCRIPT = 'TRANSCRIPT',
+  RECEIPT = 'RECEIPT',
+  INVOICE = 'INVOICE',
+  REPORT_CARD = 'REPORT_CARD',
+  ADMISSION_LETTER = 'ADMISSION_LETTER',
+  EMPLOYMENT_LETTER = 'EMPLOYMENT_LETTER',
+}
+
+export enum DocumentGenerationStatus {
+  PENDING = 'PENDING',
+  PROCESSING = 'PROCESSING',
+  COMPLETED = 'COMPLETED',
+  FAILED = 'FAILED',
+}
+
+export enum DocumentTemplateFormat {
+  HTML = 'HTML',
+  MARKDOWN = 'MARKDOWN',
+}

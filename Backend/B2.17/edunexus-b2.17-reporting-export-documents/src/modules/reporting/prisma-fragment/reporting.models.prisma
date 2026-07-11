@@ -1,0 +1,139 @@
+// ====================================================================
+// B2.12 — Enterprise Reporting & Export Infrastructure
+// ====================================================================
+// ADDITIVE ONLY. This fragment is not wired into prisma/schema.prisma
+// yet — it is merged in at B2.21 (Backend Foundation Consolidation)
+// along with every other parallel milestone's models. Until then, the
+// reporting module's repositories (report-template.repository.ts,
+// scheduled-report.repository.ts, reporting-execution.repository.ts)
+// reference these delegates through a documented type-cast — see the
+// "Known Compile-Time Gap" section of IMPLEMENTATION_SUMMARY_B2_12.md.
+//
+// To merge: paste the three models + two enums below into
+// schema.prisma, then run `prisma migrate dev`. Every model follows
+// the standard enterprise base-field block already documented at the
+// top of schema.prisma (tenantId/schoolId/campusId, version, soft
+// delete, audit fields).
+// ====================================================================
+
+enum ReportExecutionStatus {
+  QUEUED
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum ScheduleFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+  CUSTOM
+}
+
+model ReportTemplate {
+  id            String    @id @default(uuid())
+  tenantId      String    @map("tenant_id")
+  schoolGroupId String?   @map("school_group_id")
+  schoolId      String?   @map("school_id")
+  campusId      String?   @map("campus_id")
+  version       Int       @default(1)
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+  createdBy     String?   @map("created_by")
+  updatedBy     String?   @map("updated_by")
+  deletedBy     String?   @map("deleted_by")
+
+  name              String
+  description       String?
+  reportKey         String  @map("report_key")
+  layout            Json?
+  branding          Json?
+  defaultParameters Json?   @map("default_parameters")
+
+  scheduledReports ScheduledReport[]
+  executions       ReportExecution[]
+
+  @@index([tenantId])
+  @@index([deletedAt])
+  @@index([tenantId, reportKey])
+  @@map("report_templates")
+}
+
+model ScheduledReport {
+  id            String    @id @default(uuid())
+  tenantId      String    @map("tenant_id")
+  schoolGroupId String?   @map("school_group_id")
+  schoolId      String?   @map("school_id")
+  campusId      String?   @map("campus_id")
+  version       Int       @default(1)
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+  createdBy     String?   @map("created_by")
+  updatedBy     String?   @map("updated_by")
+  deletedBy     String?   @map("deleted_by")
+
+  name             String
+  reportKey        String            @map("report_key")
+  templateId       String?           @map("template_id")
+  template         ReportTemplate?   @relation(fields: [templateId], references: [id])
+  format           String
+  frequency        ScheduleFrequency
+  cronExpression   String            @map("cron_expression")
+  parameters       Json?
+  deliveryChannels String[]          @map("delivery_channels")
+  recipientEmails  String[]          @map("recipient_emails")
+  isActive         Boolean           @default(true) @map("is_active")
+  lastRunAt        DateTime?         @map("last_run_at")
+  nextRunAt        DateTime?         @map("next_run_at")
+
+  executions ReportExecution[]
+
+  @@index([tenantId])
+  @@index([deletedAt])
+  @@index([isActive])
+  @@map("scheduled_reports")
+}
+
+model ReportExecution {
+  id            String    @id @default(uuid())
+  tenantId      String    @map("tenant_id")
+  schoolGroupId String?   @map("school_group_id")
+  schoolId      String?   @map("school_id")
+  campusId      String?   @map("campus_id")
+  version       Int       @default(1)
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+  createdBy     String?   @map("created_by")
+  updatedBy     String?   @map("updated_by")
+  deletedBy     String?   @map("deleted_by")
+
+  reportKey         String                @map("report_key")
+  templateId        String?               @map("template_id")
+  template          ReportTemplate?       @relation(fields: [templateId], references: [id])
+  scheduledReportId String?               @map("scheduled_report_id")
+  scheduledReport   ScheduledReport?      @relation(fields: [scheduledReportId], references: [id])
+  format            String
+  status            ReportExecutionStatus @default(QUEUED)
+  triggerType       String                @map("trigger_type")
+  parameters        Json
+  progress          Int                   @default(0)
+  fileKey           String?               @map("file_key")
+  fileSizeBytes     Int?                  @map("file_size_bytes")
+  rowCount          Int?                  @map("row_count")
+  errorMessage      String?               @map("error_message")
+  requestedBy       String?               @map("requested_by")
+  attempts          Int                   @default(0)
+  startedAt         DateTime?             @map("started_at")
+  completedAt       DateTime?             @map("completed_at")
+
+  @@index([tenantId])
+  @@index([deletedAt])
+  @@index([tenantId, status])
+  @@index([scheduledReportId])
+  @@map("report_executions")
+}

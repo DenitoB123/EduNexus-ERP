@@ -1,0 +1,97 @@
+// ============================================================================
+// B2.17 — Enterprise Reporting, Export & Document Generation Framework
+// ------------------------------------------------------------------
+// STANDALONE SCHEMA FRAGMENT. Append to prisma/schema.prisma during
+// consolidation, alongside B2.12's reporting.models.prisma fragment
+// (report_templates, scheduled_reports, report_executions — already
+// merged into this project's schema by this point).
+// ============================================================================
+
+enum DocumentType {
+  LETTER
+  CERTIFICATE
+  TRANSCRIPT
+  RECEIPT
+  INVOICE
+  REPORT_CARD
+  ADMISSION_LETTER
+  EMPLOYMENT_LETTER
+}
+
+enum DocumentGenerationStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum DocumentTemplateFormat {
+  HTML
+  MARKDOWN
+}
+
+model DocumentTemplate {
+  id            String   @id @default(uuid())
+  tenantId      String   @map("tenant_id")
+  schoolGroupId String?  @map("school_group_id")
+  schoolId      String?  @map("school_id")
+  campusId      String?  @map("campus_id")
+  version       Int      @default(1)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+  createdBy     String?  @map("created_by")
+  updatedBy     String?  @map("updated_by")
+  deletedBy     String?  @map("deleted_by")
+
+  code           String
+  name           String
+  type           DocumentType
+  format         DocumentTemplateFormat @default(HTML)
+  subjectTemplate String?               @map("subject_template")
+  bodyTemplate   String                 @db.Text
+  requiredFields String[]               @map("required_fields")
+  branding       Json?
+  isActive       Boolean                @default(true) @map("is_active")
+
+  generations DocumentGeneration[]
+
+  @@index([tenantId])
+  @@index([deletedAt])
+  @@unique([tenantId, code])
+  @@map("document_templates")
+}
+
+model DocumentGeneration {
+  id            String   @id @default(uuid())
+  tenantId      String   @map("tenant_id")
+  schoolGroupId String?  @map("school_group_id")
+  schoolId      String?  @map("school_id")
+  campusId      String?  @map("campus_id")
+  version       Int      @default(1)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+  createdBy     String?  @map("created_by")
+  updatedBy     String?  @map("updated_by")
+  deletedBy     String?  @map("deleted_by")
+
+  templateId    String                    @map("template_id")
+  template      DocumentTemplate          @relation(fields: [templateId], references: [id])
+  type          DocumentType
+  status        DocumentGenerationStatus  @default(PENDING)
+  data          Json
+  fileKey       String?                   @map("file_key")
+  fileSizeBytes Int?                      @map("file_size_bytes")
+  errorMessage  String?                   @map("error_message")
+  requestedBy   String?                   @map("requested_by")
+  correlationId String?                   @map("correlation_id")
+  completedAt   DateTime?                 @map("completed_at")
+
+  @@index([tenantId])
+  @@index([deletedAt])
+  @@index([tenantId, status])
+  @@index([tenantId, type])
+  @@index([templateId])
+  @@map("document_generations")
+}
