@@ -1,5 +1,5 @@
 import { IRepository } from '../../database/interfaces/repository.interface';
-import { BaseModel, PaginatedResult, PaginationInput, QueryOptions } from '../../database/interfaces/base-model.interface';
+import { BaseModel, PaginatedResult, QueryOptions } from '../../database/interfaces/base-model.interface';
 import { QueryBuilder } from '../../database/helpers/query-builder.helper';
 import { PaginationHelper } from '../../database/helpers/pagination.helper';
 import {
@@ -7,8 +7,6 @@ import {
   RecordNotFoundException,
 } from '../../database/exceptions/database.exceptions';
 import { PrismaModelDelegate } from './prisma-model-delegate.interface';
-import { ISpecification } from './specification';
-import { SpecificationQueryHelper } from '../repositories/specification-query.helper';
 
 export abstract class BaseRepository<T extends BaseModel>
   implements IRepository<T, Partial<T>, Partial<T>>
@@ -92,25 +90,5 @@ export abstract class BaseRepository<T extends BaseModel>
   async count(options: QueryOptions, tenantId: string): Promise<number> {
     const { where } = QueryBuilder.build(options, tenantId, this.allowedFilterFields);
     return this.delegate.count({ where });
-  }
-
-  /**
-   * Executes a Specification (see common/base/specification.ts)
-   * against the database, pushing its `toQuery()` fragment down as
-   * the Prisma `where` clause. Tenant scoping and soft-delete
-   * exclusion are always applied on top, the same as every other
-   * query method on this repository, so a specification can never be
-   * used to bypass tenant isolation.
-   */
-  async findBySpecification(
-    spec: ISpecification<T>,
-    tenantId: string,
-    pagination?: PaginationInput,
-  ): Promise<PaginatedResult<T>> {
-    return SpecificationQueryHelper.findMany(this.delegate, spec, tenantId, pagination);
-  }
-
-  async countBySpecification(spec: ISpecification<T>, tenantId: string): Promise<number> {
-    return SpecificationQueryHelper.count(this.delegate, spec, tenantId);
   }
 }
