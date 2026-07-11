@@ -1,0 +1,19 @@
+{
+  "name": "edunexus-backend-b2.3-generic-service-layer",
+  "version": "0.1.0",
+  "description": "EduNexus B2.3 — Generic Service Layer & Business Application Framework",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "peerDependencies": {
+    "@nestjs/common": "^10.0.0",
+    "reflect-metadata": "^0.2.0"
+  },
+  "devDependencies": {
+    "@nestjs/common": "^10.0.0",
+    "reflect-metadata": "^0.2.0",
+    "typescript": "^5.4.0"
+  }
+}
