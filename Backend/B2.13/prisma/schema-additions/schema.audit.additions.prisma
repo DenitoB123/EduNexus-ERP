@@ -1,0 +1,201 @@
+// ------------------------------------------------------------------
+// B2.13 — Enterprise Audit, Activity Logging & Compliance Framework —
+// Prisma schema additions.
+//
+// ADDITIVE ONLY. Not wired into prisma/schema.prisma automatically.
+// Append the contents below into prisma/schema.prisma and run
+// `npx prisma migrate dev` to activate.
+//
+// NOTE ON A PRIOR, NO-LONGER-PRESENT AuditLog MODEL: an earlier
+// snapshot of this codebase (B1.3) had a simpler `AuditLog` model +
+// `AuditLogService` covering a subset of this scope (action/entity/
+// actorId/payload/ipAddress/userAgent/schoolId). That model is not
+// present in the current cumulative schema (verified by inspecting
+// the actual uploaded B2.2–B2.12 snapshots — see
+// IMPLEMENTATION_SUMMARY_B2_13.md for the full account). AuditEvent
+// below is a superset of that shape, not a from-scratch reinvention —
+// field names below were kept compatible with it where the concepts
+// line up (action, entityType/entityId, actorId, metadata, ipAddress,
+// userAgent) specifically so a future consolidation pass has an easy
+// mapping if that old data ever needs migrating in.
+//
+// AuditEvent/EntityChangeLog are append-only (immutable audit trail —
+// no version/soft-delete/updatedAt/updatedBy fields), matching the
+// convention already used for other immutable logs in this codebase's
+// parallel-milestone history (e.g. WorkflowExecutionLog in B2.18).
+// ComplianceRetentionPolicy/LegalHold are ordinary versioned/
+// soft-deletable business entities and follow the full enterprise
+// base-field block documented at the top of schema.prisma.
+// ------------------------------------------------------------------
+
+enum AuditActionType {
+  CREATE
+  UPDATE
+  DELETE
+  RESTORE
+  LOGIN
+  LOGOUT
+  FAILED_LOGIN
+  PASSWORD_CHANGE
+  PERMISSION_CHANGE
+  ROLE_CHANGE
+  CONFIG_CHANGE
+  API_CALL
+  FILE_OPERATION
+  CUSTOM
+
+  @@map("audit_action_type")
+}
+
+enum AuditCategory {
+  DATA_CHANGE
+  AUTHENTICATION
+  AUTHORIZATION
+  ADMINISTRATION
+  SYSTEM
+  API
+  FILE
+  SECURITY
+
+  @@map("audit_category")
+}
+
+enum AuditSeverity {
+  INFO
+  WARNING
+  CRITICAL
+
+  @@map("audit_severity")
+}
+
+/// The central, immutable audit trail. Every automatically- or
+/// explicitly-captured action in EduNexus writes exactly one row here.
+/// Covers Audit Events, User/Session/Administrative Activity, and System
+/// Events uniformly via `category` + `module`, rather than separate
+/// tables per activity type — Activity Timeline and Search both query
+/// this one table.
+model AuditEvent {
+  id       String @id @default(uuid())
+  tenantId String @map("tenant_id")
+
+  category    AuditCategory
+  action      AuditActionType
+  severity    AuditSeverity @default(INFO)
+  module      String
+  entityType  String?          @map("entity_type")
+  entityId    String?          @map("entity_id")
+  actorId     String?          @map("actor_id")
+  actorType   String           @default("user") @map("actor_type")
+  correlationId String?        @map("correlation_id")
+  ipAddress   String?          @map("ip_address")
+  userAgent   String?          @map("user_agent")
+  statusCode  Int?             @map("status_code")
+  durationMs  Int?             @map("duration_ms")
+  message     String?
+  metadata    Json?
+
+  legalHoldExempt Boolean @default(false) @map("legal_hold_exempt")
+
+  occurredAt DateTime @default(now()) @map("occurred_at")
+
+  changeLogs EntityChangeLog[]
+
+  @@index([tenantId])
+  @@index([tenantId, category])
+  @@index([tenantId, action])
+  @@index([tenantId, severity])
+  @@index([tenantId, entityType, entityId])
+  @@index([tenantId, actorId])
+  @@index([tenantId, module])
+  @@index([correlationId])
+  @@index([occurredAt])
+  @@map("audit_events")
+}
+
+/// Field-level change history — previous/new values + which fields
+/// changed. Optionally linked to the AuditEvent that triggered it (a
+/// CREATE/UPDATE/RESTORE audit event); standalone entityType/entityId/
+/// actorId/correlationId are kept on this row too so entity history can
+/// be queried without a join for the common case.
+model EntityChangeLog {
+  id       String  @id @default(uuid())
+  tenantId String  @map("tenant_id")
+
+  auditEventId String?     @map("audit_event_id")
+  auditEvent   AuditEvent? @relation(fields: [auditEventId], references: [id])
+
+  entityType     String   @map("entity_type")
+  entityId       String   @map("entity_id")
+  changedFields  String[] @map("changed_fields")
+  previousValues Json?    @map("previous_values")
+  newValues      Json?    @map("new_values")
+  actorId        String?  @map("actor_id")
+  correlationId  String?  @map("correlation_id")
+
+  occurredAt DateTime @default(now()) @map("occurred_at")
+
+  @@index([tenantId])
+  @@index([tenantId, entityType, entityId])
+  @@index([auditEventId])
+  @@index([occurredAt])
+  @@map("entity_change_logs")
+}
+
+/// Retention rules per audit category — how long AuditEvent/EntityChangeLog
+/// rows in that category are kept before ComplianceService.purgeExpired()
+/// is allowed to delete them.
+model ComplianceRetentionPolicy {
+  id            String    @id @default(uuid())
+  tenantId      String    @map("tenant_id")
+  schoolGroupId String?   @map("school_group_id")
+  schoolId      String?   @map("school_id")
+  campusId      String?   @map("campus_id")
+  version       Int       @default(1)
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+  createdBy     String?   @map("created_by")
+  updatedBy     String?   @map("updated_by")
+  deletedBy     String?   @map("deleted_by")
+
+  category      AuditCategory
+  retentionDays Int           @map("retention_days")
+  isActive      Boolean       @default(true) @map("is_active")
+  description   String?
+
+  @@unique([tenantId, category])
+  @@index([tenantId])
+  @@index([deletedAt])
+  @@map("compliance_retention_policies")
+}
+
+/// A legal hold on a specific entity (or an entire tenant, when entityType/
+/// entityId are null) suspends retention-based purging for matching
+/// AuditEvent/EntityChangeLog rows regardless of ComplianceRetentionPolicy,
+/// until released.
+model LegalHold {
+  id            String    @id @default(uuid())
+  tenantId      String    @map("tenant_id")
+  schoolGroupId String?   @map("school_group_id")
+  schoolId      String?   @map("school_id")
+  campusId      String?   @map("campus_id")
+  version       Int       @default(1)
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+  createdBy     String?   @map("created_by")
+  updatedBy     String?   @map("updated_by")
+  deletedBy     String?   @map("deleted_by")
+
+  entityType String?   @map("entity_type")
+  entityId   String?   @map("entity_id")
+  reason     String
+  isActive   Boolean   @default(true) @map("is_active")
+  releasedAt DateTime? @map("released_at")
+  releasedBy String?   @map("released_by")
+
+  @@index([tenantId])
+  @@index([deletedAt])
+  @@index([tenantId, entityType, entityId, isActive])
+  @@map("legal_holds")
+}
