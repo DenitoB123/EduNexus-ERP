@@ -1,0 +1,277 @@
+// ------------------------------------------------------------------
+// B2.18 — Enterprise Workflow, Business Process & Orchestration
+// Framework — Prisma schema additions.
+//
+// ADDITIVE ONLY. This file is not wired into prisma/schema.prisma
+// automatically (this milestone is developed standalone per the
+// Parallel Milestone Architecture and merges at B2.21). To use locally
+// before consolidation, append the contents below (after the enums)
+// into prisma/schema.prisma and run `npx prisma migrate dev`.
+//
+// Every model below follows the enterprise base-field block documented
+// at the top of prisma/schema.prisma (tenantId, schoolGroupId/schoolId/
+// campusId, version, audit fields, soft delete) — copied by hand as
+// instructed there, since no Prisma-level BaseEntity mixin exists.
+// ------------------------------------------------------------------
+
+enum WorkflowInstanceStatus {
+  RUNNING
+  SUSPENDED
+  COMPLETED
+  FAILED
+  CANCELLED
+  COMPENSATING
+  COMPENSATED
+
+  @@map("workflow_instance_status")
+}
+
+enum WorkflowTriggerType {
+  MANUAL
+  EVENT
+  SCHEDULE
+  API
+  CHAINED
+
+  @@map("workflow_trigger_type")
+}
+
+enum WorkflowTaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  CANCELLED
+  ESCALATED
+  DELEGATED
+
+  @@map("workflow_task_status")
+}
+
+enum ApprovalRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  ESCALATED
+  CANCELLED
+
+  @@map("approval_request_status")
+}
+
+enum ApprovalDecisionValue {
+  APPROVED
+  REJECTED
+
+  @@map("approval_decision_value")
+}
+
+enum WorkflowExecutionLogEventType {
+  INSTANCE_STARTED
+  STEP_ENTERED
+  STEP_COMPLETED
+  STEP_FAILED
+  STEP_RETRIED
+  TRANSITION_TAKEN
+  APPROVAL_DECIDED
+  ESCALATED
+  DELEGATED
+  COMPENSATION_STARTED
+  COMPENSATION_COMPLETED
+  INSTANCE_COMPLETED
+  INSTANCE_FAILED
+  INSTANCE_CANCELLED
+
+  @@map("workflow_execution_log_event_type")
+}
+
+/// A versioned, reusable workflow template. steps/transitions/metadata are
+/// stored as JSON since the graph shape is engine-interpreted, not queried
+/// relationally — see IWorkflowDefinition in common/interfaces.
+model WorkflowDefinition {
+  id            String    @id @default(uuid())
+  tenantId      String    @map("tenant_id")
+  schoolGroupId String?   @map("school_group_id")
+  schoolId      String?   @map("school_id")
+  campusId      String?   @map("campus_id")
+  version       Int       @default(1)
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+  createdBy     String?   @map("created_by")
+  updatedBy     String?   @map("updated_by")
+  deletedBy     String?   @map("deleted_by")
+
+  key            String
+  name           String
+  description    String?
+  definitionVersion Int    @default(1) @map("definition_version")
+  isActive       Boolean  @default(true) @map("is_active")
+  executionMode  String   @map("execution_mode")
+  startStepId    String   @map("start_step_id")
+  steps          Json
+  transitions    Json
+  metadata       Json?
+
+  instances WorkflowInstance[]
+
+  @@unique([tenantId, key, definitionVersion])
+  @@index([tenantId])
+  @@index([deletedAt])
+  @@index([tenantId, key, isActive])
+  @@map("workflow_definitions")
+}
+
+model WorkflowInstance {
+  id            String    @id @default(uuid())
+  tenantId      String    @map("tenant_id")
+  schoolGroupId String?   @map("school_group_id")
+  schoolId      String?   @map("school_id")
+  campusId      String?   @map("campus_id")
+  version       Int       @default(1)
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+  createdBy     String?   @map("created_by")
+  updatedBy     String?   @map("updated_by")
+  deletedBy     String?   @map("deleted_by")
+
+  definitionId      String                 @map("definition_id")
+  definition        WorkflowDefinition     @relation(fields: [definitionId], references: [id])
+  definitionKey     String                 @map("definition_key")
+  definitionVersion Int                    @map("definition_version")
+  status            WorkflowInstanceStatus @default(RUNNING)
+  currentStepIds    Json                   @map("current_step_ids")
+  context           Json
+  triggerType       WorkflowTriggerType    @map("trigger_type")
+  triggeredBy       String?                @map("triggered_by")
+  parentInstanceId  String?                @map("parent_instance_id")
+
+  startedAt   DateTime  @default(now()) @map("started_at")
+  completedAt DateTime? @map("completed_at")
+  failedAt    DateTime? @map("failed_at")
+  errorMessage String?  @map("error_message")
+
+  tasks           WorkflowTask[]
+  approvalRequests ApprovalRequest[]
+  executionLogs   WorkflowExecutionLog[]
+
+  @@index([tenantId])
+  @@index([deletedAt])
+  @@index([tenantId, status])
+  @@index([tenantId, definitionKey])
+  @@index([parentInstanceId])
+  @@map("workflow_instances")
+}
+
+model WorkflowTask {
+  id            String    @id @default(uuid())
+  tenantId      String    @map("tenant_id")
+  schoolGroupId String?   @map("school_group_id")
+  schoolId      String?   @map("school_id")
+  campusId      String?   @map("campus_id")
+  version       Int       @default(1)
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+  createdBy     String?   @map("created_by")
+  updatedBy     String?   @map("updated_by")
+  deletedBy     String?   @map("deleted_by")
+
+  instanceId      String            @map("instance_id")
+  instance        WorkflowInstance  @relation(fields: [instanceId], references: [id])
+  stepId          String            @map("step_id")
+  name            String
+  status          WorkflowTaskStatus @default(PENDING)
+  assigneeId      String?           @map("assignee_id")
+  delegatedFromId String?           @map("delegated_from_id")
+  dueAt           DateTime?         @map("due_at")
+  startedAt       DateTime          @default(now()) @map("started_at")
+  completedAt     DateTime?         @map("completed_at")
+  outputData      Json?             @map("output_data")
+  errorMessage    String?           @map("error_message")
+  attempts        Int               @default(0)
+  maxAttempts     Int               @default(1) @map("max_attempts")
+
+  @@index([tenantId])
+  @@index([deletedAt])
+  @@index([instanceId])
+  @@index([tenantId, assigneeId, status])
+  @@map("workflow_tasks")
+}
+
+model ApprovalRequest {
+  id            String    @id @default(uuid())
+  tenantId      String    @map("tenant_id")
+  schoolGroupId String?   @map("school_group_id")
+  schoolId      String?   @map("school_id")
+  campusId      String?   @map("campus_id")
+  version       Int       @default(1)
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  deletedAt     DateTime? @map("deleted_at")
+  createdBy     String?   @map("created_by")
+  updatedBy     String?   @map("updated_by")
+  deletedBy     String?   @map("deleted_by")
+
+  instanceId   String                 @map("instance_id")
+  instance     WorkflowInstance       @relation(fields: [instanceId], references: [id])
+  stepId       String                 @map("step_id")
+  policy       Json
+  context      Json                   @default("{}")
+  status       ApprovalRequestStatus  @default(PENDING)
+  currentLevel Int                    @default(1) @map("current_level")
+  requestedBy  String?                @map("requested_by")
+  requestedAt  DateTime               @default(now()) @map("requested_at")
+  resolvedAt   DateTime?              @map("resolved_at")
+
+  decisions ApprovalDecision[]
+
+  @@index([tenantId])
+  @@index([deletedAt])
+  @@index([instanceId])
+  @@index([tenantId, status])
+  @@map("approval_requests")
+}
+
+model ApprovalDecision {
+  id                String   @id @default(uuid())
+  tenantId          String   @map("tenant_id")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  approvalRequestId String                 @map("approval_request_id")
+  approvalRequest    ApprovalRequest       @relation(fields: [approvalRequestId], references: [id])
+  level              Int
+  approverId         String                @map("approver_id")
+  decision           ApprovalDecisionValue
+  comment            String?
+  decidedAt          DateTime              @default(now()) @map("decided_at")
+
+  @@index([tenantId])
+  @@index([approvalRequestId])
+  @@map("approval_decisions")
+}
+
+/// Append-only audit trail — one row per meaningful engine event. Backs
+/// Workflow Monitoring (active/completed/failed views, execution history,
+/// performance metrics) without re-deriving state from instance snapshots.
+model WorkflowExecutionLog {
+  id         String   @id @default(uuid())
+  tenantId   String   @map("tenant_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  instanceId  String                        @map("instance_id")
+  instance    WorkflowInstance              @relation(fields: [instanceId], references: [id])
+  stepId      String?                       @map("step_id")
+  eventType   WorkflowExecutionLogEventType @map("event_type")
+  actorId     String?                       @map("actor_id")
+  message     String?
+  durationMs  Int?                          @map("duration_ms")
+  data        Json?
+  occurredAt  DateTime                      @default(now()) @map("occurred_at")
+
+  @@index([tenantId])
+  @@index([instanceId])
+  @@index([tenantId, eventType])
+  @@index([occurredAt])
+  @@map("workflow_execution_logs")
+}
