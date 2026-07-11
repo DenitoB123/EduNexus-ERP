@@ -1,0 +1,97 @@
+version: '3.9'
+
+networks:
+  edunexus-network:
+    driver: bridge
+
+volumes:
+  edunexus-postgres-data:
+  edunexus-redis-data:
+  edunexus-rabbitmq-data:
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: edunexus-backend
+    restart: unless-stopped
+    ports:
+      - '${APP_PORT:-3000}:3000'
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-edunexus}:${POSTGRES_PASSWORD:-edunexus_password}@postgres:5432/${POSTGRES_DB:-edunexus_db}?schema=public
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      RABBITMQ_URL: amqp://${RABBITMQ_DEFAULT_USER:-edunexus}:${RABBITMQ_DEFAULT_PASS:-edunexus_password}@rabbitmq:5672
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - edunexus-network
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: edunexus-postgres
+    restart: unless-stopped
+    ports:
+      - '${POSTGRES_PORT:-5432}:5432'
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-edunexus}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-edunexus_password}
+      POSTGRES_DB: ${POSTGRES_DB:-edunexus_db}
+    volumes:
+      - edunexus-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-edunexus} -d ${POSTGRES_DB:-edunexus_db}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - edunexus-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: edunexus-redis
+    restart: unless-stopped
+    ports:
+      - '${REDIS_PORT:-6379}:6379'
+    command: ['redis-server', '--appendonly', 'yes']
+    volumes:
+      - edunexus-redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - edunexus-network
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: edunexus-rabbitmq
+    restart: unless-stopped
+    ports:
+      - '${RABBITMQ_PORT:-5672}:5672'
+      - '${RABBITMQ_MANAGEMENT_PORT:-15672}:15672'
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER:-edunexus}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS:-edunexus_password}
+    volumes:
+      - edunexus-rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ['CMD', 'rabbitmq-diagnostics', '-q', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - edunexus-network
