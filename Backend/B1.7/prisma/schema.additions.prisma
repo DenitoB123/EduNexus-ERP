@@ -1,0 +1,180 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// EduNexus — Prisma Schema Additions
+// Milestone 1.7 — Final Infrastructure Hardening
+//
+// Append these models/enums to prisma/schema.prisma (same pattern as the
+// 1.6 schema.additions.prisma). No existing model is modified.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ─── Scheduler ────────────────────────────────────────────────────────────────
+
+model ScheduledTaskRun {
+  id         String    @id @default(cuid())
+  taskName   String
+  status     String // RUNNING | SUCCESS | FAILED
+  startedAt  DateTime  @default(now())
+  finishedAt DateTime?
+  error      String?
+  metadata   Json?
+
+  @@index([taskName])
+  @@index([status])
+  @@index([startedAt])
+  @@map("scheduled_task_runs")
+}
+
+// ─── Webhooks (outbound) ───────────────────────────────────────────────────────
+
+enum WebhookDeliveryStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  RETRYING
+}
+
+model WebhookSubscription {
+  id          String    @id @default(cuid())
+  schoolId    String?
+  url         String
+  secret      String
+  events      String[]
+  isActive    Boolean   @default(true)
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  deliveries WebhookDelivery[]
+
+  @@index([schoolId])
+  @@index([isActive])
+  @@map("webhook_subscriptions")
+}
+
+model WebhookDelivery {
+  id             String                @id @default(cuid())
+  subscriptionId String
+  subscription   WebhookSubscription   @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  eventName      String
+  payload        Json
+  status         WebhookDeliveryStatus @default(PENDING)
+  attempt        Int                   @default(0)
+  responseStatus Int?
+  responseBody   String?
+  lastAttemptAt  DateTime?
+  createdAt      DateTime              @default(now())
+
+  @@index([subscriptionId])
+  @@index([status])
+  @@index([eventName])
+  @@map("webhook_deliveries")
+}
+
+// ─── Webhooks (inbound) ─────────────────────────────────────────────────────────
+
+model InboundWebhookEvent {
+  id             String   @id @default(cuid())
+  providerKey    String
+  headers        Json
+  payload        Json
+  signatureValid Boolean
+  createdAt      DateTime @default(now())
+
+  @@index([providerKey])
+  @@index([createdAt])
+  @@map("inbound_webhook_events")
+}
+
+// ─── Feature Flags ──────────────────────────────────────────────────────────────
+
+enum FeatureFlagStatus {
+  ENABLED
+  DISABLED
+  ROLLOUT
+}
+
+model FeatureFlag {
+  id             String             @id @default(cuid())
+  key            String             @unique
+  description    String?
+  status         FeatureFlagStatus  @default(DISABLED)
+  rolloutPercent Int                @default(0)
+  isPilotOnly    Boolean            @default(false)
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  overrides FeatureFlagOverride[]
+
+  @@map("feature_flags")
+}
+
+model FeatureFlagOverride {
+  id        String      @id @default(cuid())
+  flagId    String
+  flag      FeatureFlag @relation(fields: [flagId], references: [id], onDelete: Cascade)
+  schoolId  String?
+  userId    String?
+  enabled   Boolean
+  createdAt DateTime    @default(now())
+
+  @@unique([flagId, schoolId, userId])
+  @@index([schoolId])
+  @@index([userId])
+  @@map("feature_flag_overrides")
+}
+
+// ─── Integrations ───────────────────────────────────────────────────────────────
+
+enum IntegrationProviderType {
+  PAYMENT
+  SMS
+  EMAIL
+  LMS
+  GOVERNMENT
+}
+
+enum IntegrationStatus {
+  ACTIVE
+  INACTIVE
+  ERROR
+}
+
+model IntegrationConfig {
+  id                   String                  @id @default(cuid())
+  schoolId             String?
+  providerType         IntegrationProviderType
+  providerKey          String
+  status               IntegrationStatus       @default(INACTIVE)
+  config               Json?
+  encryptedCredentials String?
+  createdAt            DateTime                @default(now())
+  updatedAt            DateTime                @updatedAt
+
+  @@unique([schoolId, providerType, providerKey])
+  @@index([schoolId])
+  @@index([providerKey])
+  @@map("integration_configs")
+}
+
+// ─── Quality Assurance ──────────────────────────────────────────────────────────
+
+enum QaCheckStatus {
+  PASSED
+  FAILED
+  WARNING
+}
+
+model QaCheckRun {
+  id          String        @id @default(cuid())
+  checkName   String
+  status      QaCheckStatus
+  issuesFound Int           @default(0)
+  details     Json?
+  startedAt   DateTime      @default(now())
+  finishedAt  DateTime?
+
+  @@index([checkName])
+  @@index([status])
+  @@index([startedAt])
+  @@map("qa_check_runs")
+}
